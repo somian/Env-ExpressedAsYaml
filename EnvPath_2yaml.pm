@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Last modified: Sun Jul 27 2025 02:51:37 PM -04:00 [EDT]
+# Last modified: Sun Jul 27 2025 05:54:26 PM -04:00 [EDT]
 # First created: Thu Jul 24 2025 12:47:02 PM -04:00 [EDT]
 use strict;
 use v5.18;
@@ -24,10 +24,14 @@ common syntax of C<-MEnvPath_2yaml>.
 =cut
 
 {
-    package Env_Paths_2yaml; 
+    package Env_Path_2yaml; 
+
+    our @EXPORT = qw/ PathToYaml /;
+    use Exporter;
+    our @ISA = qw/ Exporter /;
 
 # @PATH is same as "split $Config::Config{path_sep}, $PATH;"
-    sub ToYaml {
+    sub PathToYaml {
         my $Key = shift;
         my @pathels = @_;
         my $header = qq[$Key]  . qq[:\n];
@@ -50,20 +54,26 @@ if (!caller() and $0 eq __FILE__)
                  && $_ ne 'AMDRMSDKPATH'
                  && $_ ne 'HOMEPATH' } @Bare;
 
-     say q[---]; # Beginning of document.
-     my $accumulator;
+  #  say q[---]; # Beginning of document.
+     my ($accumulator, $documents);
   #  my $stff = Env_Paths_2yaml::ToYaml( 'INFOPATH' => @INFOPATH );
      for my $kstr ( @Bare ) {
          no strict 'refs'; # a symbolic reference below:
-         my $seq = Env_Paths_2yaml::ToYaml( $kstr, @{$kstr} );
+         my $seq = Env_Path_2yaml::PathToYaml( $kstr, @{$kstr} );
          my $yaml_segment = join q[]=> @$seq;
-         $accumulator .= qq[\n] . $yaml_segment;
+         push @$documents => $yaml_segment;
+         $accumulator .= qq[\n---\n] . $yaml_segment;
      }
+
+   # Let's see the YAML
      print $accumulator;
    # Load YAML here
-     my $arrays = Load( $accumulator );
-   # Dump the YAML as perl data
-     dd( $arrays );
+     for my $doc (@$documents) {
+         my $y = Load( $doc );
+   # Add a blank line and Dump the YAML as perl data in color
+         say '';
+         dd ($y);
+     }
   }
   ::main();
 } else { 1; }
